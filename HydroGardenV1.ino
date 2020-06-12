@@ -17,7 +17,7 @@ const char* ssid = "HP-Print-B4-ENVY";
 const char* password =  "adams1892-2";
 const long utcOffsetInSeconds = -14400;
 int lightON = 9;
-int light OFF=21;
+int lightOFF=21;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
@@ -37,7 +37,7 @@ void connectToNetwork() {
 void lightControl(){
   timeClient.update();
   Serial.print(timeClient.getHours());
-  if (timeClient.getHours()>=startLight && timeClient.getHours()<=21){
+  if (timeClient.getHours()>=lightON && timeClient.getHours()<=lightOFF){
     digitalWrite(2,HIGH);
   }
   else{
@@ -111,8 +111,8 @@ void setup() {
 
  
 void loop() {
-    lightControl()
-    CheckWaterLevelLeft()
-    CheckWaterLevelRight()
-    delay(1000)
+    lightControl();
+    CheckWaterLevelLeft();
+    CheckWaterLevelRight();
+    delay(1000);
   }
