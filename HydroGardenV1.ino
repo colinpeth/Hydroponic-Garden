@@ -12,15 +12,21 @@
 #define WaterPumpLeft 26
 #define AirPump 33
 #define Light 32
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
  
-const char* ssid = "HP-Print-B4-ENVY";
-const char* password =  "adams1892-2";
+const char* ssid = "SSID";
+const char* password =  "Password";
 const long utcOffsetInSeconds = -14400;
 int lightON = 9;
 int lightOFF=21;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
  
 void connectToNetwork() {
   WiFi.begin(ssid, password);
@@ -38,10 +44,10 @@ void lightControl(){
   timeClient.update();
   Serial.print(timeClient.getHours());
   if (timeClient.getHours()>=lightON && timeClient.getHours()<=lightOFF){
-    digitalWrite(2,HIGH);
+    digitalWrite(Light,LOW);
   }
   else{
-    digitalWrite(2,LOW);
+    digitalWrite(Light,HIGH);
   }
 }
 
@@ -57,10 +63,10 @@ void CheckWaterLevelLeft(){
   Serial.println(avgFloat);
 
   if (avgFloat==0){
-    digitalWrite(WaterPumpRight,LOW);
+    digitalWrite(WaterPumpLeft,LOW);
   }
   else{
-    digitalWrite(WaterPumpRight,HIGH);
+    digitalWrite(WaterPumpLeft,HIGH);
   }
 }
 
@@ -82,6 +88,35 @@ void CheckWaterLevelRight(){
     digitalWrite(WaterPumpRight,HIGH);
   }
 }
+
+void DisplayText(){
+  // Display Text
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.setTextColor(WHITE);
+  display.println("Herb Garden IOT");
+  display.setCursor(0,8);
+  display.print("IP: ");
+  display.println(WiFi.localIP());
+  display.setCursor(0,16);
+  display.print("Time: ");
+  display.println(timeClient.getFormattedTime());
+  display.setCursor(0,24);
+  display.print("L1:");
+  display.print(digitalRead(FloatSensorL1));
+  display.print("  L2:");
+  display.println(digitalRead(FloatSensorL2));
+  display.setCursor(0,32);
+  display.print("R1:");
+  display.print(digitalRead(FloatSensorR1));
+  display.print("  R2:");
+  display.println(digitalRead(FloatSensorR2));
+  display.display();
+  
+  
+}
  
 void setup() {
  
@@ -90,9 +125,16 @@ void setup() {
  
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.localIP());
-  pinMode(2,OUTPUT);
+  //pinMode(2,OUTPUT);
   timeClient.begin();
   //Set PinMode
+  
+  // initialize with the I2C addr 0x3C
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
+
+  // Clear the buffer.
+  display.clearDisplay();
+  
   pinMode(FloatSensorL1, INPUT_PULLUP);
   pinMode(FloatSensorL2, INPUT_PULLUP);
   pinMode(FloatSensorR1, INPUT_PULLUP);
@@ -111,8 +153,11 @@ void setup() {
 
  
 void loop() {
+    //lightControl();
+    digitalWrite(AirPump,LOW);
     lightControl();
     CheckWaterLevelLeft();
     CheckWaterLevelRight();
+    DisplayText();
     delay(1000);
   }
